@@ -1,6 +1,6 @@
 # n8n Automations 🚀
 
-Expert-level n8n workflows built to handle content and customers automatically. Each agent uses OpenAI (GPT-4o) for high-quality results.
+n8n workflows built to handle content and customers automatically. Each agent uses OpenAI (GPT-4o) for high-quality results.
 
 ---
 
