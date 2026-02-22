@@ -1,5 +1,5 @@
 {
-  "name": "WhatsApp AI Agent (Groq Free)",
+  "name": "WhatsApp AI Agent (OpenAI)",
   "nodes": [
     {
       "parameters": {
@@ -33,20 +33,20 @@
     },
     {
       "parameters": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "gpt-4o",
         "options": {}
       },
-      "id": "groq-model-id",
-      "name": "Groq Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "id": "openai-model-id",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
       "position": [
         600,
         500
       ],
       "credentials": {
-        "groqApi": {
-          "id": "your-groq-credential-id"
+        "openAiApi": {
+          "id": "your-openai-credential-id"
         }
       }
     },
@@ -248,7 +248,7 @@
       "ai_language_model": [
         [
           {
-            "node": "Groq Chat Model",
+            "node": "OpenAI Chat Model",
             "type": "ai_language_model",
             "index": 0
           }

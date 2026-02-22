@@ -158,6 +158,25 @@
         2200,
         300
       ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "openai-model-id",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        500,
+        500
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "your-openai-credential-id"
+        }
+      }
     }
   ],
   "connections": {
@@ -181,6 +200,15 @@
             "index": 0
           }
         ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "OpenAI Chat Model",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
       ]
     },
     "Wait #1": {
@@ -200,6 +228,15 @@
           {
             "node": "Tools Ready?",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "OpenAI Chat Model",
+            "type": "ai_language_model",
             "index": 0
           }
         ]
@@ -229,6 +266,15 @@
           {
             "node": "Filter the Best Tools to Upload",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "OpenAI Chat Model",
+            "type": "ai_language_model",
             "index": 0
           }
         ]
@@ -273,6 +319,15 @@
           {
             "node": "Post to Instagram",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "OpenAI Chat Model",
+            "type": "ai_language_model",
             "index": 0
           }
         ]
