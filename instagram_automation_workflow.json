@@ -1,0 +1,296 @@
+{
+  "name": "Instagram Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-id",
+      "name": "Fill Information to Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "Prepare the tools based on the input information."
+      },
+      "id": "prepare-tools-id",
+      "name": "Prepare Tools",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-1-id",
+      "name": "Wait #1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "Check if the tools are ready to be constructed."
+      },
+      "id": "construct-ready-id",
+      "name": "Construct Tools When Ready",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.ready }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "is-ready-id",
+      "name": "Tools Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "Generate the tools for the Instagram posts."
+      },
+      "id": "generate-tools-id",
+      "name": "Generate Tools",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Logic to filter the best tools for uploading\nreturn items.filter(item => item.json.quality > 0.8);"
+      },
+      "id": "filter-tools-id",
+      "name": "Filter the Best Tools to Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-id",
+      "name": "Construct Tools For a Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "id": "wait-2-id",
+      "name": "Wait #2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "Construct the tool in the right format for Instagram."
+      },
+      "id": "format-tools-id",
+      "name": "Construct the Tools in the Right Format",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "upload",
+        "caption": "={{ $json.caption }}",
+        "mediaUrl": "={{ $json.url }}"
+      },
+      "id": "post-id",
+      "name": "Post to Instagram",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [
+        2200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Fill Information to Start": {
+      "main": [
+        [
+          {
+            "node": "Prepare Tools",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Tools": {
+      "main": [
+        [
+          {
+            "node": "Wait #1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait #1": {
+      "main": [
+        [
+          {
+            "node": "Construct Tools When Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Tools When Ready": {
+      "main": [
+        [
+          {
+            "node": "Tools Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tools Ready?": {
+      "main": [
+        [
+          {
+            "node": "Generate Tools",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait #1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Tools": {
+      "main": [
+        [
+          {
+            "node": "Filter the Best Tools to Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter the Best Tools to Upload": {
+      "main": [
+        [
+          {
+            "node": "Construct Tools For a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Tools For a Time": {
+      "main": [
+        [
+          {
+            "node": "Construct the Tools in the Right Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait #2": {
+      "main": [
+        [
+          {
+            "node": "Construct Tools For a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct the Tools in the Right Format": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram": {
+      "main": [
+        [
+          {
+            "node": "Wait #2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

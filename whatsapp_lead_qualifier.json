@@ -1,0 +1,221 @@
+{
+  "name": "WhatsApp Lead Qualifier (10/10)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "wa-trigger-id",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "={{ $json.message.body }}",
+        "systemMessage": "You are an expert Sales Development Representative (SDR). Your goal is to qualify leads chatting on WhatsApp.\n\n### QUALIFICATION RULES:\n1. **Discovery**: Ask questions to understand their Budget, Authority, Need, and Timeline (BANT).\n2. **Tone**: Be professional, helpful, and concise. This is WhatsApp, so avoid long paragraphs.\n3. **Scoring**: As you gather info, use the `score_lead` tool. \n4. **Action**:\n   - If the score is >= 80 (High Quality), use the `book_meeting` tool to offer a call.\n   - If the score is < 80 but interested, send them the 'Special Offer' link (https://your-business.com/offer).\n   - If they are just browsing, stay polite and answer questions.\n\n### STATE MANAGEMENT:\nUse the chat history to remember what they've already told you. Don't repeat questions."
+      },
+      "id": "sdr-agent-id",
+      "name": "SDR AI Agent",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "groq-model-id",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        350,
+        500
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "your-groq-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": "lead_chat_history"
+      },
+      "id": "postgres-memory-id",
+      "name": "Postgres Lead Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1,
+      "position": [
+        500,
+        500
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "your-postgres-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "score_lead",
+        "description": "Evaluates lead quality (0-100) based on BANT criteria.",
+        "method": "POST",
+        "url": "https://your-internal-api.com/score",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation",
+              "value": "={{ $node[\"Postgres Lead Memory\"].json.history }}"
+            }
+          ]
+        }
+      },
+      "id": "tool-score-id",
+      "name": "score_lead",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [
+        650,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "name": "book_meeting",
+        "description": "Provides a booking link or schedules a call if the lead is high quality.",
+        "method": "POST",
+        "url": "https://api.calendly.com/v2/scheduling_links",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CALENDLY_TOKEN"
+            }
+          ]
+        }
+      },
+      "id": "tool-book-id",
+      "name": "book_meeting",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [
+        750,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "your-phone-id",
+        "recipientPhoneNumber": "={{ $node[\"WhatsApp Trigger\"].json.message.from }}",
+        "text": "={{ $json.output }}"
+      },
+      "id": "send-response-id",
+      "name": "Send SDR Response",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        950,
+        300
+      ],
+      "credentials": {
+        "whatsAppBusinessApi": {
+          "id": "your-whatsapp-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extra step to log lead scores to a database or sheet\nif ($node[\"SDR AI Agent\"].json.last_score > 80) {\n  return { status: 'hot_lead', score: $node[\"SDR AI Agent\"].json.last_score };\n}\nreturn { status: 'nurture', score: $node[\"SDR AI Agent\"].json.last_score };"
+      },
+      "id": "lead-logger-id",
+      "name": "Lead Logger",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        750,
+        150
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "SDR AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SDR AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send SDR Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lead Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "Groq Chat Model",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_memory": [
+        [
+          {
+            "node": "Postgres Lead Memory",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_tool": [
+        [
+          {
+            "node": "score_lead",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "book_meeting",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

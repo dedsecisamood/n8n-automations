@@ -1,0 +1,164 @@
+{
+  "name": "AI Content Repurposing Engine (10/10)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "repurpose-content",
+        "options": {}
+      },
+      "id": "trigger-id",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "={{ $json.body.content || $json.body.url }}",
+        "systemMessage": "You are an elite Social Media Strategist and Content Repurposer. \n\nYour goal is to take the provided long-form content (either a raw transcript/article or a URL) and transform it into 4 distinct, high-performing social media posts. \n\n### PLATFORM GUIDELINES:\n\n1. **X (Twitter) Thread**:\n   - 3-5 posts per thread.\n   - Hooky first tweet.\n   - Use (1/n) formatting.\n   - Punchy, data-driven, or contrarian tone.\n\n2. **LinkedIn Post**:\n   - Story-driven or professional insight format.\n   - Use plenty of whitespace for readability.\n   - End with a clear call-to-action (CTA).\n   - Professional yet relatable tone.\n\n3. **Instagram Caption**:\n   - Strong 'Hook' in the first line.\n   - Narrative style.\n   - Include relevant emojis (but don't overdo it).\n   - 5-10 targeted hashtags.\n\n4. **WhatsApp Broadcast Message**:\n   - Direct, personal, and concise.\n   - Use bullet points for key takeaways.\n   - Clear CTA at the end.\n\n### OUTPUT SPECIFICATION:\nReturn a JSON object with the following keys:\n{\n  \"x_thread\": \"...\",\n  \"linkedin_post\": \"...\",\n  \"instagram_caption\": \"...\",\n  \"whatsapp_message\": \"...\",\n  \"summary\": \"...\"\n}\n\nEnsure ALL formatting (newlines, emojis, thread numbers) is preserved within the JSON string values."
+      },
+      "id": "ai-agent-id",
+      "name": "AI Content Repurposer",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "groq-model-id",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        350,
+        500
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "your-groq-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "fetch_content",
+        "description": "Fetches raw text content from a given URL (YouTube, Blog, etc.)",
+        "method": "POST",
+        "url": "https://api.scraping-service.com/content",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        }
+      },
+      "id": "tool-fetch-id",
+      "name": "fetch_content",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [
+        550,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const output = $node[\"AI Content Repurposer\"].json.output;\n  // Attempt to parse if it's a string, or just return if it's already an object\n  return typeof output === 'string' ? JSON.parse(output) : output;\n} catch (e) {\n  return {\n    error: \"Failed to parse AI output as JSON\",\n    raw: $node[\"AI Content Repurposer\"].json.output\n  };\n}"
+      },
+      "id": "parser-id",
+      "name": "JSON Parser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allContext",
+        "options": {}
+      },
+      "id": "response-id",
+      "name": "Respond to User",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        950,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Content Repurposer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Content Repurposer": {
+      "main": [
+        [
+          {
+            "node": "JSON Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "Groq Chat Model",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_tool": [
+        [
+          {
+            "node": "fetch_content",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser": {
+      "main": [
+        [
+          {
+            "node": "Respond to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

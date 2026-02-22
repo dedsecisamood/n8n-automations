@@ -1,0 +1,311 @@
+{
+  "name": "WhatsApp AI Agent (Groq Free)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "e0d00f8c-8f4b-4b1f-a8c3-3390090f442b",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversational",
+        "prompt": "={{ $json.message.body }}",
+        "systemMessage": "You are a helpful AI assistant for [Company Name]. Your website is [https://www.your-company-url.com]. Use the list_links tool to find pages on the site and get_page to read their content."
+      },
+      "id": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+      "name": "AI Agent",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "id": "groq-model-id",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        600,
+        500
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "your-groq-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": "chat_history"
+      },
+      "id": "memory-id",
+      "name": "Postgres Users Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1,
+      "position": [
+        750,
+        550
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "your-postgres-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "list_links",
+        "description": "Returns up to 100 unique links from a given URL.",
+        "method": "POST",
+        "url": "https://api.scraping-service.com/links",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "auth-token",
+              "value": "BF0EAC97-B72A4E69-A116F6C4-AF123456"
+            },
+            {
+              "name": "url",
+              "value": "https://www.your-company-url.com"
+            }
+          ]
+        }
+      },
+      "id": "tool-links-id",
+      "name": "list_links",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_page",
+        "description": "Fetches the fully rendered content of a web page.",
+        "method": "POST",
+        "url": "https://api.scraping-service.com/content",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "auth-token",
+              "value": "BF0EAC97-B72A4E69-A116F6C4-AF123456"
+            }
+          ]
+        }
+      },
+      "id": "tool-page-id",
+      "name": "get_page",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [
+        950,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst lastMessage = new Date($node[\"WhatsApp Trigger\"].json.message.timestamp * 1000);\nconst diffHours = (now - lastMessage) / (1000 * 60 * 60);\nreturn { \n  is_within_24h: diffHours < 24 \n};"
+      },
+      "id": "check-id",
+      "name": "24-hour window check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.is_within_24h }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-id",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  clean_answer: $node[\"AI Agent\"].json.output.replace(/【.*?】/g, '')\n};"
+      },
+      "id": "clean-id",
+      "name": "cleanAnswer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1550,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "your-phone-id",
+        "recipientPhoneNumber": "={{ $node[\"WhatsApp Trigger\"].json.message.from }}",
+        "text": "={{ $json.clean_answer }}"
+      },
+      "id": "send-id",
+      "name": "Send AI Agent's Answer",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        250
+      ],
+      "credentials": {
+        "whatsAppBusinessApi": {
+          "id": "your-whatsapp-credential-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "your-phone-id",
+        "recipientPhoneNumber": "={{ $node[\"WhatsApp Trigger\"].json.message.from }}",
+        "templateName": "reopen_conversation"
+      },
+      "id": "template-id",
+      "name": "Send Pre-approved Template Message to Reopen the Conversation",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        450
+      ],
+      "credentials": {
+        "whatsAppBusinessApi": {
+          "id": "your-whatsapp-credential-id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "24-hour window check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_tool": [
+        [
+          {
+            "node": "list_links",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "get_page",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_language_model": [
+        [
+          {
+            "node": "Groq Chat Model",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_memory": [
+        [
+          {
+            "node": "Postgres Users Memory",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24-hour window check": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "cleanAnswer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Pre-approved Template Message to Reopen the Conversation",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "cleanAnswer": {
+      "main": [
+        [
+          {
+            "node": "Send AI Agent's Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
