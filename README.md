@@ -1,50 +1,53 @@
-# n8n Automations 🚀
+n8n AI Automation Suite
+A collection of production-ready n8n workflows designed to automate content repurposing, lead qualification, and customer communication using AI agents (GPT-4o and Llama 3.3).
 
-n8n workflows built to handle content and customers automatically. Each agent uses OpenAI (GPT-4o) for high-quality results.
+🚀 What’s Inside?
+This repository contains five core automation workflows built to handle business operations without manual intervention:
 
----
+AI Content Repurposer: Takes one long-form article or URL and automatically turns it into optimized posts for X (Twitter), LinkedIn, Instagram, and WhatsApp. It outputs clean JSON for easy integration.
 
-## 1. Content Repurposer
+WhatsApp Lead Qualifier: An AI SDR that chats with leads on WhatsApp. It uses the BANT framework (Budget, Authority, Need, Timeline) to score leads and automatically sends booking links to high-value prospects.
 
-**What it does:** Takes a long video transcript or blog post and turns it into viral posts for every social platform.
+Gmail Auto-Responder: Monitors your inbox, filters out "No-Reply" junk, and uses AI to draft professional replies. It saves the reply as a draft so you can review before hitting send.
 
-> **Example:**
->
-> - **Input:** A 20-minute transcript about "How to bake bread."
-> - **Output:** A punchy Twitter thread, a professional LinkedIn story, a beautiful Instagram caption, and a short WhatsApp update for your community.
+Instagram Automation: A scheduled workflow that prepares, filters for quality, and posts content to Instagram automatically.
 
-## 2. Instagram Assistant
+WhatsApp AI Customer Agent: A 24/7 support agent that can "read" your website links to answer customer questions accurately on WhatsApp.
 
-**What it does:** Manages your Instagram content flow so you don't have to do it manually.
+🛠️ How to Make This Work
+Prerequisites
+An n8n instance (self-hosted or Cloud).
 
-> **Example:**
->
-> - **Action:** It monitors your content queue, formats everything perfectly for Instagram's layout, and handles the upload process.
+API Keys for OpenAI (GPT-4o) and Groq (Llama 3.3).
 
-## 3. WhatsApp AI Agent
+Meta Developer Account for WhatsApp and Instagram Cloud API access.
 
-**What it does:** Acts as a 24/7 smart assistant that answers customer questions using your website's data.
+Google Cloud Console credentials for Gmail/Google Workspace.
 
-> **Example:**
->
-> - **Customer:** "Do you ship to Canada?"
-> - **Agent:** (Searches your site) "Yes! We ship to Canada via DHL, and it usually takes 5-7 business days."
+Setup Instructions
+Import Workflows: Download the .json files from this repo. In n8n, click Workflows > Import from File.
 
-## 4. WhatsApp Lead Qualifier
+Configure Credentials:
 
-**What it does:** Chat with potential customers to see if they are a "hot lead" before you spend time talking to them.
+Open each workflow and look for nodes with a key icon (OpenAI, Gmail, WhatsApp).
 
-> **Example:**
->
-> - **Chat:** The agent asks about their budget and timeline.
-> - **Result:** If they have a high budget, it automatically sends them your booking link to schedule a call. If not, it gives them a discount code to use later.
+Click the node and select Create New Credential to paste your API keys.
 
----
+Set Up Webhooks: For the WhatsApp and Content Repurposer workflows, you will need to copy the "Production Webhook URL" from the Trigger node and paste it into your Meta Developer app or external trigger.
 
-## Quick Start
+Database (Optional): The Lead Qualifier and WhatsApp Agent use Postgres to remember chat history. If you don't use Postgres, you can swap these for the "Window Binary Memory" node in n8n.
 
-1. **Import:** Drag and drop the `.json` files into your n8n canvas.
-2. **Connect:** Add your OpenAI API key to the "OpenAI Chat Model" nodes.
-3. **Turn On:** Set the workflow to 'Active' and you're good to go!
+🧐 Technical Analysis
+Efficiency & Logic
+These workflows aren't just "text generators." They use Conditional Logic and Tool-Calling:
 
-Created with ❤️ by DedSec
+Validation: The JSON Parser node in the Content Repurposer ensures that the AI's output is actually usable by other apps.
+
+Filtering: The Gmail workflow uses a code snippet to instantly kill "Out of Office" or automated emails before they waste your AI tokens.
+
+Memory: By using Postgres Chat Memory, the WhatsApp bots feel human because they remember what a user said three messages ago.
+
+Safety Measures
+The 24-Hour Window: The WhatsApp workflows include a check to ensure you stay within Meta’s 24-hour communication window, preventing account bans.
+
+Human-in-the-loop: The Gmail workflow creates Drafts instead of sending emails instantly. This gives you a safety net to prevent AI "hallucinations" from reaching a client.
